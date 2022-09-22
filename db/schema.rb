@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_09_22_213618) do
+ActiveRecord::Schema[7.0].define(version: 2022_09_22_214242) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -26,6 +26,20 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_22_213618) do
     t.index ["warehouse_id"], name: "index_business_hours_on_warehouse_id"
   end
 
+  create_table "reserved_slots", force: :cascade do |t|
+    t.string "reservation_name", null: false
+    t.datetime "start_time", null: false
+    t.datetime "end_time", null: false
+    t.bigint "warehouse_id", null: false
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["end_time"], name: "index_reserved_slots_on_end_time"
+    t.index ["start_time"], name: "index_reserved_slots_on_start_time"
+    t.index ["uuid"], name: "index_reserved_slots_on_uuid"
+    t.index ["warehouse_id"], name: "index_reserved_slots_on_warehouse_id"
+  end
+
   create_table "warehouses", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
@@ -33,4 +47,5 @@ ActiveRecord::Schema[7.0].define(version: 2022_09_22_213618) do
   end
 
   add_foreign_key "business_hours", "warehouses"
+  add_foreign_key "reserved_slots", "warehouses"
 end
