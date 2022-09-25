@@ -26,15 +26,16 @@ RSpec.describe 'ReservedSlots', type: :request do
   end
 
   describe 'POST /create' do
-    context 'valid attributes' do
-      let(:valid_attributes) do
-        {
-          reservation_name: 'Name',
-          start_time: 3.hours.ago,
-          end_time: 3.hours.from_now
-        }
-      end
+    let!(:business_hour) { create(:business_hour, day: Date.today.wday, warehouse:) }
+    let(:valid_attributes) do
+      {
+        reservation_name: 'Name',
+        start_time: 3.hours.ago,
+        end_time: 3.hours.from_now
+      }
+    end
 
+    context 'valid attributes' do
       before do
         post api_warehouse_reserved_slots_path(warehouse.id), params: valid_attributes
       end
@@ -59,6 +60,22 @@ RSpec.describe 'ReservedSlots', type: :request do
 
       before do
         post api_warehouse_reserved_slots_path(warehouse.id), params: invalid_attributes
+      end
+
+      it 'should return status 422' do
+        expect(response.status).to eq 422
+      end
+
+      it 'should not create warehouse' do
+        expect(json.keys).to contain_exactly('errors')
+      end
+    end
+
+    context 'no business hour' do
+      let(:business_hour) { nil }
+
+      before do
+        post api_warehouse_reserved_slots_path(warehouse.id), params: valid_attributes
       end
 
       it 'should return status 422' do

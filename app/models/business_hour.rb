@@ -1,6 +1,9 @@
 class BusinessHour < ApplicationRecord
   belongs_to :warehouse
 
+  scope :by_date, ->(date) { where(arel_table[:day].eq(date.wday)) }
+  scope :by_warehouse_id, ->(warehouse_id) { where(arel_table[:warehouse_id].eq(warehouse_id)) }
+
   validates_presence_of :day, :open_time, :close_time
   validates_inclusion_of :day, in: 0..6
   validates :day, uniqueness: { scope: :warehouse_id }
@@ -33,6 +36,10 @@ class BusinessHour < ApplicationRecord
 
   def close_time_parsed
     parse(close_time)
+  end
+
+  def range
+    open_time_parsed..close_time_parsed
   end
 
   def parse(time_str)
