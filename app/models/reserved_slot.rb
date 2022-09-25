@@ -15,7 +15,7 @@ class ReservedSlot < ApplicationRecord
         }
 
   def validate_overlapping
-    return unless warehouse_overlapping_slots.first
+    return if warehouse_overlapping_slots.empty? || warehouse_overlapping_slots.first == self
 
     errors.add(:start_time, 'Overlapping with other slot')
   end
