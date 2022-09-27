@@ -90,11 +90,11 @@ RSpec.describe 'ReservedSlots', type: :request do
 
   describe 'PUT /update' do
     let!(:reserved_slot) { create(:reserved_slot, warehouse:) }
+    let!(:business_hour) { create(:business_hour, day: reserved_slot.start_time.wday, warehouse:) }
+    let(:reservation_name) { 'Name' }
+    let(:valid_attributes) { { reservation_name: } }
 
     context 'valid attributes' do
-      let(:reservation_name) { 'Name' }
-      let(:valid_attributes) { { reservation_name: } }
-
       before do
         put api_warehouse_reserved_slot_path(
           warehouse.id,
@@ -119,6 +119,25 @@ RSpec.describe 'ReservedSlots', type: :request do
           warehouse.id,
           reserved_slot.uuid
         ), params: invalid_attributes
+      end
+
+      it 'should return status 422' do
+        expect(response.status).to eq 422
+      end
+
+      it 'should not create warehouse' do
+        expect(json.keys).to contain_exactly('errors')
+      end
+    end
+
+    context 'no business hour' do
+      let(:business_hour) { nil }
+
+      before do
+        put api_warehouse_reserved_slot_path(
+          warehouse.id,
+          reserved_slot.uuid
+        ), params: valid_attributes
       end
 
       it 'should return status 422' do

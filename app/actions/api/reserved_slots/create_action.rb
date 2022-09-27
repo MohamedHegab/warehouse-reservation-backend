@@ -2,11 +2,13 @@ module Api
   module ReservedSlots
     class CreateAction < ::Api::BaseAction
       def call(params)
-        validated_data = yield validate(params)
-        business_hour = yield find_business_hour(params)
-        yield check_slot_is_available(business_hour, params)
-        reserved_slot = yield persist(validated_data.to_h)
-        Success(reserved_slot)
+        ReservedSlot.transaction(isolation: :serializable) do
+          validated_data = yield validate(params)
+          business_hour = yield find_business_hour(params)
+          yield check_slot_is_available(business_hour, params)
+          reserved_slot = yield persist(validated_data.to_h)
+          Success(reserved_slot)
+        end
       end
 
       private
@@ -34,7 +36,7 @@ module Api
 
       def check_slot_is_available(business_hour, params)
         time_correct = CheckReservedSlotAvailable.new(
-          business_hour: business_hour,
+          business_hour:,
           start_reserve_time: params.fetch(:start_time),
           end_reserve_time: params.fetch(:end_time)
         ).call

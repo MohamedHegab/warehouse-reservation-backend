@@ -2,15 +2,14 @@ module Api
   module ReservedSlots
     class UpdateAction < ::Api::BaseAction
       def call(params)
-        validated_data = yield validate(params)
-        reserved_slot = yield find(params)
-        if params.fetch(:start_time, nil) ||
-           params.fetch(:end_time, nil)
-          business_hour = yield find_business_hour(params)
-          yield check_slot_is_available(business_hour, params)
+        ReservedSlot.transaction(isolation: :serializable) do
+          validated_data = yield validate(params)
+          reserved_slot = yield find(params)
+          business_hour = yield find_business_hour(reserved_slot, params)
+          yield check_slot_is_available(business_hour, reserved_slot, params)
+          reserved_slot = yield update(reserved_slot, validated_data.to_h)
+          Success(reserved_slot)
         end
-        reserved_slot = yield update(reserved_slot, validated_data.to_h)
-        Success(reserved_slot)
       end
 
       private
@@ -35,8 +34,8 @@ module Api
         end
       end
 
-      def find_business_hour(params)
-        start_time = params.fetch(:start_time, business_hour.start_time).to_datetime
+      def find_business_hour(reserved_slot, params)
+        start_time = params.fetch(:start_time, reserved_slot.start_time).to_datetime
         business_hour =
           BusinessHour.by_date(
             start_time
@@ -48,9 +47,9 @@ module Api
         end
       end
 
-      def check_slot_is_available(business_hour, params)
-        start_time = params.fetch(:start_time, business_hour.start_time)
-        end_time = params.fetch(:end_time, business_hour.end_time)
+      def check_slot_is_available(business_hour, reserved_slot, params)
+        start_time = params.fetch(:start_time, reserved_slot.start_time)
+        end_time = params.fetch(:end_time, reserved_slot.end_time)
 
         time_correct = CheckReservedSlotAvailable.new(
           business_hour:,
