@@ -8,6 +8,7 @@ module Api
           business_hour = yield find_business_hour(reserved_slot, params)
           yield check_slot_is_available(business_hour, reserved_slot, params)
           reserved_slot = yield update(reserved_slot, validated_data.to_h)
+          yield publish_to_channel(reserved_slot)
           Success(reserved_slot)
         end
       end
@@ -61,6 +62,14 @@ module Api
         else
           Failure('Warehouse is closed')
         end
+      end
+
+      def publish_to_channel(reserved_slot)
+        ActionCable.server.broadcast "warehouse_#{reserved_slot.warehouse_id}_reserved_slots_channel", {
+          action: 'update',
+          data: reserved_slot
+        }
+        Success()
       end
     end
   end

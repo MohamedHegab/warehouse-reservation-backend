@@ -11,6 +11,7 @@ gem 'dry-monads'
 gem 'dry-validation'
 gem 'pg', '~> 1.1'
 gem 'puma', '~> 5.0'
+gem 'rack-cors'
 gem 'rails', '~> 7.0.3', '>= 7.0.3.1'
 gem 'timecop', '~> 0.9.5'
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
